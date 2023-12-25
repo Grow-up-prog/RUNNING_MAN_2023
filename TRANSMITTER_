@@ -1,0 +1,65 @@
+//NRF24L01 TRANSMITTER 1
+#include <SPI.h>
+#include <Wire.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
+RF24 radio (7, 8); //ce & csn
+const uint64_t pipe1 = 0xF0F0F0F0AA;
+struct data
+{
+  int value;
+  byte byteNum;
+};
+
+data transmitterSatu;
+
+void setup()
+{
+  radio.begin();
+  radio.openWritingPipe (pipe1);
+  radio.setPALevel (RF24_PA_LOW);
+  radio.setDataRate (RF24_250KBPS);
+  radio.stopListening();
+  transmitterSatu.byteNum = 1; //identifikasi transmitter
+}
+
+void loop()
+{
+  delay(2000);
+  transmitterSatu.value = random(10,20);
+  radio.write(&transmitterSatu, sizeof(transmitterSatu));
+} 
+
+//NRF24L01 TRANSMITTER 2
+#include <SPI.h>
+#include <Wire.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
+RF24 radio (7, 8); //ce & csn
+const uint64_t pipe2 = 0xF0F0F0F0BB;
+struct data
+{
+  int value;
+  byte byteNum;
+};
+
+data transmitterSatu;
+
+void setup()
+{
+  radio.begin();
+  radio.openWritingPipe (pipe2);
+  radio.setPALevel (RF24_PA_LOW);
+  radio.setDataRate (RF24_250KBPS);
+  radio.stopListening();
+  transmitterSatu.byteNum = 2; //identifikasi transmitter
+}
+
+void loop()
+{
+  delay(1500);
+  transmitterSatu.value = random(10,20);
+  radio.write(&transmitterSatu, sizeof(transmitterSatu));
+}
