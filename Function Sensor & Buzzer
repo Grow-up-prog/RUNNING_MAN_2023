@@ -1,0 +1,37 @@
+#define echoPin 5 //Echo Pin
+#define trigPin 6 //Trigger Pin
+#define relay 4 
+long durasi, jarak; //waktu untuk kalkulasi jarak
+ 
+void setup() {
+Serial.begin (9600); //mnemulai koneksi serial
+
+//deklarasi pin sebagai Input dan Output
+pinMode(trigPin, OUTPUT);
+pinMode(relay,OUTPUT);
+pinMode(echoPin, INPUT);
+}
+ 
+void loop() {
+
+digitalWrite(trigPin, LOW);delayMicroseconds(2);   //Set Posisi Triger Off
+digitalWrite(trigPin, HIGH);delayMicroseconds(10); //Set Posisi Trigger On
+digitalWrite(trigPin, LOW);                       //Set Posisi Trigger Off 
+durasi = pulseIn(echoPin, HIGH);                  // Menghitung Gelombang yang masuk ke Echo dan menyimpan di dalam Variabel Durasi
+ 
+//perhitungan untuk dijadikan jarak
+jarak = (durasi/2) / 29.1; 
+ 
+Serial.print(jarak);
+Serial.println(" Cm");
+if(jarak>10 && jarak <120){
+  digitalWrite(relay,LOW);
+}
+else {
+  digitalWrite(relay,HIGH);
+}
+
+ 
+//waktu tunda 5 detik
+delay(500);
+}
