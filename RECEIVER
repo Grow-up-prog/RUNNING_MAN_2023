@@ -1,39 +1,42 @@
-//NRF24L01 RECEIVER
 #include <SPI.h>
-#include <Wire.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <printf.h>
+RF24 radio(7, 8); // CE, CSN
 
-RF24 radio (7, 8); //ce & csn
 const uint64_t pipe1 = 0xF0F0F0F0AA;  //transmitter 1
 const uint64_t pipe2 = 0xF0F0F0F0BB;  //transmitter 2
-//pipe3
+const uint64_t pipe3 = 0xF0F0F0F0CC;  //transmitter 3
+const uint64_t pipe4 = 0xF0F0F0F0AB;  //transmitter 4
 
-struct data
-{
+String dataFromDisplay;
+
+struct data {
   int value;
   byte byteNum;
 };
 
-data receiver4All;
+data receiver4All;  
 
-void setup()
-{
+void setup() {
   Serial.begin(9600);
+  Serial.println("RECEIVER_MASTER");
   radio.begin();
   pinMode(LED_BUILTIN, OUTPUT);
-  radio.openReadingPipe (1, pipe1); //readdatafrom transmitter 1
+  radio.openReadingPipe(1, pipe1);  //readdatafrom transmitter 1
   radio.openReadingPipe (2, pipe2); //readdatafrom transmitter 2
-  //pipe3
-  radio.setPALevel (RF24_PA_LOW);
-  radio.setDataRate (RF24_250KBPS);
+  radio.openReadingPipe(3, pipe3);  //readdatafrom transmitter 3
+  radio.openReadingPipe (4, pipe4); //readdatafrom transmitter 4
+
+
+  radio.setPALevel(RF24_PA_MIN);
   radio.startListening();
+  printf_begin();
+  radio.printDetails();
 }
 
-void loop()
-{
-  if (radio.available())
-  {
+void loop() {
+  if (radio.available()) {
     radio.read(&receiver4All, sizeof(receiver4All));
     disp_data();
     radio.read(&receiver4All, sizeof(receiver4All));
@@ -46,15 +49,20 @@ void loop()
   }
 }
 
-void disp_data()
-{
-  if (receiver4All.byteNum == 1)
-  {
+void disp_data() {
+  if (receiver4All.byteNum == 1) {
     Serial.print("DATA FROM TRANSMITTER1.......");
     Serial.println(receiver4All.value);
-  } else   if (receiver4All.byteNum == 2)
-  {
+  } else if (receiver4All.byteNum == 2) {
     Serial.print("DATA FROM TRANSMITTER2.......");
+    Serial.println(receiver4All.value);
+  }
+  else if (receiver4All.byteNum == 3) {
+    Serial.print("DATA FROM TRANSMITTER3.......");
+    Serial.println(receiver4All.value);
+  }
+  else if (receiver4All.byteNum == 4) {
+    Serial.print("DATA FROM TRANSMITTER4.......");
     Serial.println(receiver4All.value);
   }
 }
