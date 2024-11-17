@@ -1,0 +1,97 @@
+//BLUETOOTH SYSTEM
+#include <BluetoothSerial.h>
+// Pengaturan Bluetooth
+BluetoothSerial SerialBT;
+char commandBLU;
+//variabel nilai millis
+long millisSebelum;
+int milidetik, detik, menit, jam;
+//debounce
+int currentState1 = HIGH;
+int lastState1 = HIGH;
+//sensor
+int irSensor = 13;
+int kondisi = 0;
+int bendera = 0;
+
+//CHECKPOINT PELARI
+float step1 = 0;
+float step2 = 0;
+float step3 = 0;
+
+int akumulasi = 0;
+
+void setup() {
+  SerialBT.begin(9600);
+  Serial.begin(9600);
+  pinMode(irSensor, INPUT);
+}
+void loop() {
+  stopWatch(); //program sensoring stopwatch
+  if (SerialBT.available()) {
+    commandBLU = SerialBT.read();
+    if (commandBLU == 'F') {
+      milidetik = 0;
+      detik = 0;
+      menit = 0;
+      Serial.print(menit);
+      Serial.print("-");
+      Serial.print(detik);
+      Serial.print("-");
+      Serial.println(milidetik);
+      bendera = 0;
+      //      Serial.println("-");
+    } else if (commandBLU == 'B') {
+      bendera = 1;
+    } else if (commandBLU == 'C') {
+      bendera = 2;
+    } else if (commandBLU == 'D') {
+      bendera = 3;
+    }
+    delay(200);
+  }
+}
+
+
+//====================
+void stopWatch() {
+  if (bendera == 1) {
+    if (millis() >= millisSebelum + 100) {
+      milidetik++;
+      if (milidetik >= 10) {
+        milidetik = 0;
+        detik++;
+
+        if (detik >= 60) {
+          detik = 0;
+          menit++;
+        }
+      }
+      Serial.print(menit);
+      Serial.print("-");
+      Serial.print(detik);
+      Serial.print("-");
+      Serial.println(milidetik);
+      //      Serial.println("-");
+      millisSebelum = millis();
+    }
+  } else if (bendera == 2) {
+    step1 = (float(detik) + float(milidetik) / 10);
+    Serial.println(step1);
+    //    Serial.println("-");
+    millisSebelum = millis();
+    bendera = 1;
+  } else if (bendera == 3) {
+    float Buffstep2 = (float(detik) + float(milidetik) / 10);
+    step2 = Buffstep2 - step1;
+    Serial.print("nilai step 1 = "); Serial.println(step1);
+    Serial.print("nilai step 2 = "); Serial.println(Buffstep2);
+    Serial.print("nilai selisih = ");
+    Serial.println(step2);
+    //    Serial.println("-");
+    millisSebelum = millis();
+    bendera = 1;
+  }
+  //    delay(2000);
+  //  Serial.print("bendera = "); Serial.println(bendera);
+}
