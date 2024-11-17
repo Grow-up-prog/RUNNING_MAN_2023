@@ -1,0 +1,143 @@
+//LCD SYSTEM
+#include <Adafruit_GFX.h>
+#include <Wire.h>
+#include <Adafruit_SSD1306.h> // Memanggil Library OLED SSD1306
+#define SCREEN_WIDTH 128 // Lebar Oled dalam Pixel
+#define SCREEN_HEIGHT 32 // Tinggi Oled dalam Pixel
+#define OLED_RESET     -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+int dataInt;              //Mendeklarasi varibel dataInt
+
+//BLUETOOTH SYSTEM
+#include <BluetoothSerial.h>
+// Pengaturan Bluetooth
+BluetoothSerial SerialBT;
+char commandBLU;
+
+// current temperature & humidity, updated in loop()
+float a = 0;
+float b = 0;
+float c = 0;
+float d = 0;
+int flag = 0;
+
+//millis================================
+//Set every 5 sec read DHT
+unsigned long previousMillis = 0;  // variable to store the last time the task was run
+const long interval = 10000;        // time interval in milliseconds (eg 1000ms = 1 second)
+//======================================
+
+void setup() {
+  Serial.begin(9600);
+  SerialBT.begin("RUNNING UNJ"); // Nama bluetooth
+  delay(500);
+
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();                 //Membersihkan tampilan
+  display.setTextSize(1);                 //Ukuran tulisan
+  display.setTextColor(WHITE);    //Warna Tulisan
+  display.setCursor(40, 0);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+  display.println(F("SKRIPSI"));       //Menampilkan Tulisan RobotikIndonesia
+  display.setCursor(18, 9);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+  display.println(F("SYSTEM PENCATAT"));               //Menampilkan nilai variabel dataInt
+  display.setCursor(18, 19);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+  display.println(F("KECEPATAN ATLET"));               //Menampilkan nilai variabel dataInt
+  display.display();                      //Mulai Menampilkan
+}
+
+void loop() {
+
+  unsigned long currentMillis = millis();  // mendapatkan waktu sekarang
+  // Checks whether it is time to run the task
+  if (currentMillis - previousMillis >= interval) {
+    // Save the last time the task was run
+    previousMillis = currentMillis;
+    if (a == 0 && flag == 0) {
+      a = random(10, 15) / 10.0;
+      flag ++;
+    } else if (b == 0 && flag == 1) {
+      b = random(10, 18) / 10.0;
+      flag ++;
+    } else if (c == 0 && flag == 2) {
+      c = random(10, 13) / 10.0;
+      flag ++;
+    } else if (flag == 3) {
+      flag = 3;
+      dataMasuk();
+    }
+    d = a + b + c;
+    Serial.print(a);
+    Serial.print(",");
+    Serial.print(b);
+    Serial.print(",");
+    Serial.print(c);
+    Serial.print(",");
+    Serial.print(d);
+    Serial.println();
+    Serial.print("flag = ");
+    Serial.println(flag);
+
+
+    display.clearDisplay();                 //Membersihkan tampilan
+    display.setTextSize(1);                 //Ukuran tulisan
+    display.setTextColor(WHITE);    //Warna Tulisan
+    display.setCursor(0, 0);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.print(F("step 1="));       //Menampilkan Tulisan RobotikIndonesia
+    display.setCursor(45, 0);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.print(a);       //Menampilkan Tulisan RobotikIndonesia
+    display.setCursor(90, 0);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.println(F("S"));       //Menampilkan Tulisan RobotikIndonesia
+
+    display.setCursor(0, 7);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.print(F("step 2="));       //Menampilkan Tulisan RobotikIndonesia
+    display.setCursor(45, 7);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.print(b);       //Menampilkan Tulisan RobotikIndonesia
+    display.setCursor(90, 7);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.println(F("S"));       //Menampilkan Tulisan RobotikIndonesia
+
+    display.setCursor(0, 16);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.print(F("step 3="));       //Menampilkan Tulisan RobotikIndonesia
+    display.setCursor(45, 16);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.print(c);       //Menampilkan Tulisan RobotikIndonesia
+    display.setCursor(90, 16);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.println(F("S"));       //Menampilkan Tulisan RobotikIndonesia
+
+    display.setCursor(0, 24);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.print(F("Akumulasi="));       //Menampilkan Tulisan RobotikIndonesia
+    display.setCursor(60, 24);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.print(d);       //Menampilkan Tulisan RobotikIndonesia
+    display.setCursor(110, 24);                // Koordinat awal tulisan (x,y) dimulai dari atas-kiri
+    display.println(F("S"));       //Menampilkan Tulisan RobotikIndonesia
+
+    display.display();                      //Mulai Menampilkan
+
+    //Send to Bluetooth
+    SerialBT.print(a);
+    SerialBT.print(",");
+    SerialBT.print(b);
+    SerialBT.print(",");
+    SerialBT.print(c);
+    SerialBT.print(",");
+    SerialBT.print(d);
+    SerialBT.println();
+  }
+}
+
+
+
+
+
+void dataMasuk() {
+  if (SerialBT.available() > 0)
+  {
+    commandBLU = SerialBT.read();
+    Serial.println(commandBLU);
+    if (commandBLU == 'A' || commandBLU == 'B') {
+      flag = 0;
+      a = 0;
+      b = 0;
+      c = 0;
+      d = 0;
+    }
+  }
+}
