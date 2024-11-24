@@ -1,64 +1,15 @@
-#include <SPI.h>
 #include <nRF24L01.h>
-#include <RF24.h>
 #include <printf.h>
-#define E18Sensor 5 //Trigger Pin
-#define relay 4
-long durasi, jarak; //waktu untuk kalkulasi jarak
-
-RF24 radio(7, 8); // CE, CSN
-const uint64_t pipe1 = 0xF0F0F0F0AA;
-struct data
-{
-  int value;
-  byte byteNum;
-};
-
-data transmitterSatu;
-
-void setup() {
-  radio.begin();
-  radio.openWritingPipe (pipe1);
-  radio.setPALevel(RF24_PA_MIN);
-  radio.stopListening();
-  transmitterSatu.byteNum = 1; //identifikasi transmitter
-  Serial.begin(9600);
-  printf_begin();
-  radio.printDetails();
-  //deklarasi pin sebagai Input dan Output
-  pinMode(E18Sensor, INPUT);
-  pinMode(relay, OUTPUT);
-}
-
-void loop() {
-  int state = digitalRead(E18Sensor);
-  Serial.println(state);
-  if (state == LOW) {
-    transmitterSatu.value = 1;
-    radio.write(&transmitterSatu, sizeof(transmitterSatu));
-    digitalWrite(relay, LOW);
-    Serial.println("Objek Terdeteksi");
-    delay(3000);
-  }
-  else {
-    digitalWrite(relay, HIGH);
-    transmitterSatu.value = 0;
-  }
-}
-
-
-
-
-
-
-//NRF24L01 TRANSMITTER 2
-#include <SPI.h>
-#include <Wire.h>
-#include <nRF24L01.h>
 #include <RF24.h>
+#include <SPI.h>
 
-RF24 radio (7, 8); //ce & csn
-const uint64_t pipe2 = 0xF0F0F0F0BB;
+
+
+RF24 radio(7, 8); //CE = 7 dan CSN 8
+//RF24 radio(8,7); //CE = 8 dan CSN 7
+//RF24 radio(8, 10); //CE = 8 dan CSN 10
+
+const uint64_t pipe3 = 0xF0F0F0F0CC;  //transmitter 3
 struct data
 {
   int value;
@@ -70,16 +21,20 @@ data transmitterSatu;
 void setup()
 {
   radio.begin();
-  radio.openWritingPipe (pipe2);
-  radio.setPALevel (RF24_PA_LOW);
+  Serial.begin(9600);
+  radio.openWritingPipe (pipe3);
+  radio.setPALevel (RF24_PA_MIN);
   radio.setDataRate (RF24_250KBPS);
   radio.stopListening();
-  transmitterSatu.byteNum = 2; //identifikasi transmitter
+  transmitterSatu.byteNum = 3; //identifikasi transmitter
+  printf_begin();
+  radio.printDetails();
 }
 
 void loop()
 {
   delay(1500);
-  transmitterSatu.value = random(10,20);
-  radio.write(&transmitterSatu, sizeof(transmitterSatu));
+  const char text[] = "pesan3";
+  radio.write(&text, sizeof(text));
+  delay(100);
 }
