@@ -1,0 +1,56 @@
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+#include <RF24Network.h>
+#include <printf.h>
+RF24 radio(4, 5); // CE, CSN  ESP 4,5
+RF24Network network(radio); // Include the radio in the network
+const uint16_t this_node = 00; // Address of our node in Octal format
+char text[32] = "";
+int led = 2;
+int buzzer = 15;
+
+void setup() {
+  SPI.begin();
+  Serial.begin(9600);
+  Serial.println("RECEIVER_MASTER");
+  radio.begin();
+  network.begin(90, this_node);
+  radio.setDataRate(RF24_2MBPS);
+  pinMode(led, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+  printf_begin();
+  radio.printDetails();
+}
+
+void loop() {
+  while ( network.available() ) { // Is there any incoming data?
+    RF24NetworkHeader header;
+    network.read(header, &text, sizeof(text)); // Read the incoming data
+    String transData = String(text);
+    Serial.println(transData);
+    if (transData == "pesan")
+    {
+      digitalWrite(led, HIGH);
+      delay(1500);
+      digitalWrite(led, LOW);
+      delay(1500);
+    } else if (transData == "pesan2")
+    {
+      digitalWrite(buzzer, HIGH);
+      delay(1500);
+      digitalWrite(buzzer, LOW);
+      delay(1500);
+    } else if (transData == "pesan3")
+    {
+      digitalWrite(buzzer, HIGH);
+      delay(500);
+      digitalWrite(buzzer, LOW);
+      delay(500);
+    }
+    else {
+      Serial.println("Salah Pesan");
+      delay(1000);
+    }
+  }
+}
