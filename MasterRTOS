@@ -21,27 +21,32 @@ const byte address[6] = "00001";
 BluetoothSerial SerialBT;
 char commandBLU;
 
-float a = 0;
-float b = 0;
-float c = 0;
-float d = 0;
+float a_md = 0;
+float a_d = 0;
+float b_md = 0;
+float b_d = 0;
+float c_md = 0;
+float c_d = 0;
 int flag = 0;
 char cmd ;
 
 //STOPWATCH
 //variabel nilai millis
+long millisSekarang;
 long millisSebelum;
 int milidetik, detik, menit, jam;
 //CHECKPOINT PELARI
-float step1 = 0;
-float step2 = 0;
-float step3 = 0;
-
+float a = 0;
+float b = 0;
+float c = 0;
+float d = 0;
+int CPBuzzer = 0;
+int oneSendZero = 0;
 
 // define two tasks for Blink & AnalogRead
 void TaskRadio( void *pvParameters );
 void TaskBluetooth( void *pvParameters );
-void TaskStopwatch( void *pvParameters );
+//void TaskStopwatch( void *pvParameters );
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -61,7 +66,7 @@ void setup() {
   // Now set up two tasks to run independently.
   xTaskCreatePinnedToCore(TaskRadio, "TaskRadio ", 1024, NULL, 1,  NULL,  ARDUINO_RUNNING_CORE);
   xTaskCreatePinnedToCore(TaskBluetooth,  "TaskBluetooth", 1024,  NULL,  1 ,  NULL,  ARDUINO_RUNNING_CORE);
-  xTaskCreatePinnedToCore(TaskStopwatch,  "TaskStopwatch", 1024,  NULL,  1 ,  NULL,  ARDUINO_RUNNING_CORE);
+  //  xTaskCreatePinnedToCore(TaskStopwatch,  "TaskStopwatch", 1024,  NULL,  1 ,  NULL,  ARDUINO_RUNNING_CORE);
 }
 
 void loop()
@@ -84,14 +89,38 @@ void TaskRadio(void *pvParameters)  // This is a task.
       Serial.println(text);
       String transData = String(text);
       Serial.println(transData);
-      if (transData == "pesan")
+      if (transData == "pesan" && flag == 1 && a == 0)
       {
+        if (milidetik > 0) {
+          a_md = float(milidetik) / 10;
+        }
+        a_d = detik;
+        a = a_d + a_md;
         buzzerAktifasi();
-      } else if (transData == "pesan2")
+        sendingData();
+      }
+      else if (transData == "pesan2" && flag == 1 && b == 0)
       {
+        if (milidetik > 0) {
+          b_md = float(milidetik) / 10;
+        }
+        b_d = detik;
+        b = b_d + b_md;
         buzzerAktifasi();
-      } else if (transData == "pesan3")
+        sendingData();
+
+      } else if (transData == "pesan3" && flag == 1 && c == 0)
       {
+        if (milidetik > 0) {
+          c_md = float(milidetik) / 10;
+        }
+        c_d = detik;
+        c = c_d + c_md;
+        buzzerAktifasi();
+        sendingData();
+        flag = 2;
+      }
+      else if (transData == "pesan" || transData == "pesan2" || transData == "pesan3") {
         buzzerAktifasi();
       }
       else {
@@ -112,66 +141,67 @@ void TaskBluetooth(void *pvParameters)  // This is a task.
       Serial.println(cmd);
     }
     if (cmd == 'B') {
-      buzzerAktifasiRun();
       flag = 1; //flag run
       cmd = 'Z';
+      oneSendZero = 0;
     }
     if (cmd == 'A' || cmd == 'B') {
       milidetik = 0;
       detik = 0;
       menit = 0;
       flag = 0;
+      CPBuzzer = 0;
+      a = 0;
+      b = 0;
+      c = 0;
+      d = 0;
+      a_md = 0;
+      a_d = 0;
+      b_md = 0;
+      b_d = 0;
+      c_md = 0;
+      c_d = 0;
+      if (oneSendZero == 0) {
+        sendingData();
+        oneSendZero = 1;
+      }
+
     }
-  }
-}
-
-
-void TaskStopwatch(void *pvParameters)  // This is a task.
-{
-  (void) pvParameters;
-
-  for (;;)
-  {
     if (flag == 1) {
-      if (millis() >= millisSebelum + 100) {
+      millisSekarang = millis();
+      if (detik < 1) {
+        digitalWrite(buzzer, HIGH);
+      } else if (detik >= 1 && CPBuzzer == 0) {
+        digitalWrite(buzzer, LOW);
+        CPBuzzer = 1;
+      }
+      if (millisSekarang - millisSebelum >= 100) {
         milidetik++;
         if (milidetik >= 10) {
-          milidetik = 0;
           detik++;
-          if (detik >= 60) {
-            detik = 0;
-            menit ++;
-          }
+          milidetik = 0;
         }
+        Serial.print("-");
+        Serial.print(detik);
+        Serial.print("-");
+        Serial.println(milidetik);
+        millisSebelum = millisSekarang;
       }
-      Serial.print("waktu : ");
-      Serial.print(menit);
-      Serial.print("-");
-      Serial.print(detik);
-      Serial.print("-");
-      Serial.println(milidetik);
-      millisSebelum = millis();
     }
   }
 }
-
-
-
 
 
 
 void buzzerAktifasi() {
   digitalWrite(buzzer, HIGH);
-  vTaskDelay(500);
+  vTaskDelay(1000);
   digitalWrite(buzzer, LOW);
   vTaskDelay(200);
 }
 
 void buzzerAktifasiRun() {
   digitalWrite(buzzer, HIGH);
-  vTaskDelay(1000);
-  digitalWrite(buzzer, LOW);
-  vTaskDelay(200);
 }
 
 void ledAktifasi() {
@@ -179,4 +209,16 @@ void ledAktifasi() {
   vTaskDelay(500);
   digitalWrite(led, LOW);
   vTaskDelay(200);
+}
+
+void sendingData() {
+  SerialBT.print(a);
+  SerialBT.print(",");
+  SerialBT.print(b);
+  SerialBT.print(",");
+  SerialBT.print(c);
+  SerialBT.print(",");
+  d = a + b + c;
+  SerialBT.print(d);
+  SerialBT.println();
 }
