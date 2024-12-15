@@ -1,0 +1,182 @@
+#if CONFIG_FREERTOS_UNICORE
+#define ARDUINO_RUNNING_CORE 0
+#else
+#define ARDUINO_RUNNING_CORE 1
+#endif
+
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+#include <printf.h>
+#include <Wire.h>
+RF24 radio(4, 5); // CE, CSN ESP32
+int led = 2;
+int buzzer = 15;
+int dataInt;              //Mendeklarasi varibel dataInt
+const byte address[6] = "00001";
+
+//BLUETOOTH SYSTEM
+#include <BluetoothSerial.h>
+// Pengaturan Bluetooth
+BluetoothSerial SerialBT;
+char commandBLU;
+
+float a = 0;
+float b = 0;
+float c = 0;
+float d = 0;
+int flag = 0;
+char cmd ;
+
+//STOPWATCH
+//variabel nilai millis
+long millisSebelum;
+int milidetik, detik, menit, jam;
+//CHECKPOINT PELARI
+float step1 = 0;
+float step2 = 0;
+float step3 = 0;
+
+
+// define two tasks for Blink & AnalogRead
+void TaskRadio( void *pvParameters );
+void TaskBluetooth( void *pvParameters );
+void TaskStopwatch( void *pvParameters );
+
+// the setup function runs once when you press reset or power the board
+void setup() {
+  pinMode(led, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+  // initialize serial communication at 115200 bits per second:
+  Serial.begin(115200);
+  radio.begin();
+  radio.openReadingPipe(0, address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.startListening();
+  printf_begin();
+  radio.printDetails();
+  SerialBT.begin("RUNNING UNJ"); // Nama bluetooth
+  Serial.print("PENCATAT KECEPATAN ATLET");
+  delay(1000);
+  // Now set up two tasks to run independently.
+  xTaskCreatePinnedToCore(TaskRadio, "TaskRadio ", 1024, NULL, 1,  NULL,  ARDUINO_RUNNING_CORE);
+  xTaskCreatePinnedToCore(TaskBluetooth,  "TaskBluetooth", 1024,  NULL,  1 ,  NULL,  ARDUINO_RUNNING_CORE);
+  xTaskCreatePinnedToCore(TaskStopwatch,  "TaskStopwatch", 1024,  NULL,  1 ,  NULL,  ARDUINO_RUNNING_CORE);
+}
+
+void loop()
+{
+  // Empty. Things are done in Tasks.
+}
+
+/*---------------------- Tasks ---------------------*/
+
+void TaskRadio(void *pvParameters)  // This is a task.
+{
+  (void) pvParameters;
+  // initialize digital LED_BUILTIN on pin 13 as an output.
+
+  for (;;) // A Task shall never return or exit.
+  {
+    if (radio.available()) {
+      char text[32] = "";
+      radio.read(&text, sizeof(text));
+      Serial.println(text);
+      String transData = String(text);
+      Serial.println(transData);
+      if (transData == "pesan")
+      {
+        buzzerAktifasi();
+      } else if (transData == "pesan2")
+      {
+        buzzerAktifasi();
+      } else if (transData == "pesan3")
+      {
+        buzzerAktifasi();
+      }
+      else {
+        Serial.println("Salah Pesan");
+      }
+    }
+  }
+}
+
+void TaskBluetooth(void *pvParameters)  // This is a task.
+{
+  (void) pvParameters;
+
+  for (;;)
+  {
+    if (SerialBT.available()) {
+      cmd = SerialBT.read();
+      Serial.println(cmd);
+    }
+    if (cmd == 'B') {
+      buzzerAktifasiRun();
+      flag = 1; //flag run
+      cmd = 'Z';
+    }
+    if (cmd == 'A' || cmd == 'B') {
+      milidetik = 0;
+      detik = 0;
+      menit = 0;
+      flag = 0;
+    }
+  }
+}
+
+
+void TaskStopwatch(void *pvParameters)  // This is a task.
+{
+  (void) pvParameters;
+
+  for (;;)
+  {
+    if (flag == 1) {
+      if (millis() >= millisSebelum + 100) {
+        milidetik++;
+        if (milidetik >= 10) {
+          milidetik = 0;
+          detik++;
+          if (detik >= 60) {
+            detik = 0;
+            menit ++;
+          }
+        }
+      }
+      Serial.print("waktu : ");
+      Serial.print(menit);
+      Serial.print("-");
+      Serial.print(detik);
+      Serial.print("-");
+      Serial.println(milidetik);
+      millisSebelum = millis();
+    }
+  }
+}
+
+
+
+
+
+
+void buzzerAktifasi() {
+  digitalWrite(buzzer, HIGH);
+  vTaskDelay(500);
+  digitalWrite(buzzer, LOW);
+  vTaskDelay(200);
+}
+
+void buzzerAktifasiRun() {
+  digitalWrite(buzzer, HIGH);
+  vTaskDelay(1000);
+  digitalWrite(buzzer, LOW);
+  vTaskDelay(200);
+}
+
+void ledAktifasi() {
+  digitalWrite(led, HIGH);
+  vTaskDelay(500);
+  digitalWrite(led, LOW);
+  vTaskDelay(200);
+}
