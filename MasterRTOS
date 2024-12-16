@@ -11,8 +11,10 @@
 #include <Wire.h>
 RF24 radio(4, 5); // CE, CSN ESP32
 int led = 2;
-int buzzer = 15;
+int buzzer = 26;
 int dataInt;              //Mendeklarasi varibel dataInt
+int buzzerLoud = 25;
+
 const byte address[6] = "00001";
 
 //BLUETOOTH SYSTEM
@@ -52,6 +54,7 @@ void TaskBluetooth( void *pvParameters );
 void setup() {
   pinMode(led, OUTPUT);
   pinMode(buzzer, OUTPUT);
+  pinMode(buzzerLoud, OUTPUT);
   // initialize serial communication at 115200 bits per second:
   Serial.begin(115200);
   radio.begin();
@@ -171,8 +174,10 @@ void TaskBluetooth(void *pvParameters)  // This is a task.
       millisSekarang = millis();
       if (detik < 1) {
         digitalWrite(buzzer, HIGH);
+        digitalWrite(buzzerLoud, HIGH);
       } else if (detik >= 1 && CPBuzzer == 0) {
         digitalWrite(buzzer, LOW);
+        digitalWrite(buzzerLoud, LOW);
         CPBuzzer = 1;
       }
       if (millisSekarang - millisSebelum >= 100) {
@@ -191,17 +196,18 @@ void TaskBluetooth(void *pvParameters)  // This is a task.
   }
 }
 
-
-
 void buzzerAktifasi() {
   digitalWrite(buzzer, HIGH);
+  digitalWrite(buzzerLoud, HIGH);
   vTaskDelay(1000);
   digitalWrite(buzzer, LOW);
+  digitalWrite(buzzerLoud, LOW);
   vTaskDelay(200);
 }
 
 void buzzerAktifasiRun() {
   digitalWrite(buzzer, HIGH);
+  digitalWrite(buzzerLoud, HIGH);
 }
 
 void ledAktifasi() {
